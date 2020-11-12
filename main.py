@@ -10,7 +10,7 @@ def _get_diff(pr):
 
 def main():
 
-    token = os.getenv("GITHUB_TOKEN")
+    token = os.getenv("GH_TOKEN")
     headers = {}
     if token:
         headers["Authorization"]=  "token %s" % token
