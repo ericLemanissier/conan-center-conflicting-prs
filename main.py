@@ -92,7 +92,7 @@ def main():
     msg += "| --- | --- |\n"
     for p in illegal_prs:
         msg += "| #%s | " % p["number"]
-        msg += ", ".join(p["libs"])
+        msg += ", ".join(sorted(p["libs"]))
         msg += " |\n"
 
     print(msg)
