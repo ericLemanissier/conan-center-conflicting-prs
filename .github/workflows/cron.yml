@@ -30,4 +30,4 @@ jobs:
       - name: Run a one-line script
         run: python3 main.py
         env:
-          GH_ISSUE_NUMBER: 3517
+          GH_ISSUE_NUMBER: 3571
