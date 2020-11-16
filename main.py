@@ -8,21 +8,26 @@ def _get_diff(pr):
     r.raise_for_status()
     return r.text
 
-def main():
-
+def _make_request(method, url, **kwargs):
     token = os.getenv("GH_TOKEN")
     headers = {}
     if token:
         headers["Authorization"]=  "token %s" % token
+
+    headers["Accept"] = "application/vnd.github.v3+json"
     
     user = os.getenv("GH_USER")
     pw = os.getenv("GH_PW")
     auth = None
     if user and pw:
         auth = requests.auth.HTTPBasicAuth(user, pw)
+    r = requests.request(method, "https://api.github.com" + url, headers=headers, auth=auth, **kwargs)
+    r.raise_for_status()
+    if int(r.headers["X-RateLimit-Remaining"]) < 10:
+        print("%s/%s github api call used, remaining %s until %s" % (r.headers["X-Ratelimit-Used"], r.headers["X-RateLimit-Limit"], r.headers["X-RateLimit-Remaining"], datetime.datetime.fromtimestamp(int(r.headers["X-Ratelimit-Reset"]))))
+    return r
 
-    headers["Accept"] = "application/vnd.github.v3+json"
-
+def main():
     owner = "conan-io"
     repo = "conan-center-index"
 
@@ -30,7 +35,7 @@ def main():
 
     page = 1
     while True:
-        r = requests.get(f"https://api.github.com/repos/{owner}/{repo}/pulls", headers=headers, auth=auth, params=
+        r = _make_request("GET",f"/repos/{owner}/{repo}/pulls", params=
         {
             "state": "open",
             "sort": "created",
@@ -38,8 +43,6 @@ def main():
             "per_page": 100,
             "page": str(page)
         })
-        r.raise_for_status()
-        print("%s/%s github api call used, remaining %s until %s" % (r.headers["X-Ratelimit-Used"], r.headers["X-RateLimit-Limit"], r.headers["X-RateLimit-Remaining"], datetime.datetime.fromtimestamp(int(r.headers["X-Ratelimit-Reset"]))))
         results = r.json()
         prs.extend(results)
         page += 1
@@ -100,12 +103,10 @@ def main():
     issue_number = os.getenv("GH_ISSUE_NUMBER")
     if issue_number:    
         print("updating issue")
-        r = requests.patch(f"https://api.github.com/repos/{owner}/{repo}/issues/{issue_number}", headers=headers, auth=auth, json=
+        _make_request("PATCH", f"/repos/{owner}/{repo}/issues/{issue_number}", json=
         {
             "body": msg,
         })
-        r.raise_for_status()
-        print("%s/%s github api call used, remaining %s until %s" % (r.headers["X-Ratelimit-Used"], r.headers["X-RateLimit-Limit"], r.headers["X-RateLimit-Remaining"], datetime.datetime.fromtimestamp(int(r.headers["X-Ratelimit-Reset"]))))
                 
         
 
