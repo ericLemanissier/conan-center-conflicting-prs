@@ -110,7 +110,7 @@ class Detector:
             msg += " |\n"
         print(msg)
 
-        if issue_number:
+        if issue_number and self._make_request("GET", f"/repos/{self.owner}/{self.repo}/issues/{issue_number}").json()["body"] != msg:
             print("updating issue")
             self._make_request("PATCH", f"/repos/{self.owner}/{self.repo}/issues/{issue_number}", json={
                 "body": msg,
