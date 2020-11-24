@@ -79,7 +79,7 @@ class Detector:
         auth = None
         if self.user and self.pw:
             auth = requests.auth.HTTPBasicAuth(self.user, self.pw)
-        r = requests.request(method, "https://api.github.com" + url, headers=headers, auth=auth, **kwargs)
+        r = requests.request(method, "https://api.github.com%s" % url, headers=headers, auth=auth, **kwargs)
         r.raise_for_status()
         if int(r.headers["X-RateLimit-Remaining"]) < 10:
             print("%s/%s github api call used, remaining %s until %s" % (
@@ -155,8 +155,8 @@ class Detector:
         if comment_id:
             if comment_id["body"] != message:
                 print(
-                    f"comment found: https://github.com/{self.owner}/{self.repo}/pull/{issue_number}#issuecomment-" + comment_id['id'])
-                self._make_request("PATCH", f"/repos/{self.owner}/{self.repo}/issues/comments/" + comment_id["id"], json={
+                    f"comment found: https://github.com/{self.owner}/{self.repo}/pull/{issue_number}#issuecomment-%s" % comment_id['id'])
+                self._make_request("PATCH", f"/repos/{self.owner}/{self.repo}/issues/comments/%s" % comment_id["id"], json={
                     "body": message
                })
         else:
