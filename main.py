@@ -1,13 +1,7 @@
 import requests
 import datetime
 import os
-from multiprocessing import Pool
-
-
-def _get_diff(pr):
-    r = requests.get(pr["diff_url"])
-    r.raise_for_status()
-    return r.text
+import aiohttp, asyncio
 
 
 class Detector:
@@ -39,18 +33,21 @@ class Detector:
             if not results:
                 break
 
-        with Pool(os.cpu_count()) as p:
-            status_futures = {}
-            for pr in self.prs:
-                status_futures[pr] = p.apply_async(_get_diff, (self.prs[pr],))
-            for pr in self.prs:
-                self.prs[pr]["diff"] = status_futures[pr].get()
 
-        for p in self.prs.values():
-            p["libs"] = set()
-            for line in p["diff"].split("\n"):
-                if line.startswith("+++ b/recipes/") or line.startswith("--- a/recipes/"):
-                    p["libs"].add(line.split("/")[2])
+        async def _populate_diffs():
+            async with aiohttp.ClientSession() as session:
+                async def _populate_diff(pr):
+                    async with session.get(self.prs[pr]["diff_url"]) as r:
+                        r.raise_for_status()
+                        self.prs[pr]["libs"] = set()
+                        diff = await r.text()
+                        for line in diff.split("\n"):
+                            if line.startswith("+++ b/recipes/") or line.startswith("--- a/recipes/"):
+                                self.prs[pr]["libs"].add(line.split("/")[2])
+                await asyncio.gather(*[asyncio.create_task(_populate_diff(pr)) for pr in self.prs])
+
+        loop = asyncio.get_event_loop()
+        loop.run_until_complete(_populate_diffs())
 
         self.libs = dict()
 
