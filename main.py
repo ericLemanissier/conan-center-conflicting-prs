@@ -10,10 +10,18 @@ class Detector:
 
     dry_run = False
 
-    def __init__(self, token=None, user=None, password=None):
-        self.token = token
-        self.user = user
-        self.pw = password
+    def __init__(self, token=None, user=None, pw=None):
+        self.session = requests.session()
+        
+        if user and pw:
+            self.session.auth = requests.auth.HTTPBasicAuth(user, pw)
+
+        self.session.headers = {}
+        if token:
+            self.session.headers["Authorization"] = "token %s" % token
+
+        self.session.headers["Accept"] = "application/vnd.github.v3+json"
+        self.session.headers["User-Agent"] = "request"
 
         self.prs = {}
 
@@ -67,16 +75,8 @@ class Detector:
     def _make_request(self, method, url, **kwargs):
         if self.dry_run and method in ["PATCH", "POST"]:
             return
-        headers = {}
-        if self.token:
-            headers["Authorization"] = "token %s" % self.token
 
-        headers["Accept"] = "application/vnd.github.v3+json"
-
-        auth = None
-        if self.user and self.pw:
-            auth = requests.auth.HTTPBasicAuth(self.user, self.pw)
-        r = requests.request(method, "https://api.github.com%s" % url, headers=headers, auth=auth, **kwargs)
+        r = self.session.request(method, "https://api.github.com%s" % url, **kwargs)
         r.raise_for_status()
         if int(r.headers["X-RateLimit-Remaining"]) < 10:
             print("%s/%s github api call used, remaining %s until %s" % (
