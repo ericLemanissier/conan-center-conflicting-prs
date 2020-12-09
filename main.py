@@ -1,7 +1,8 @@
 import requests
-import datetime
+from datetime import datetime,timedelta,timezone
 import os
 import aiohttp, asyncio
+import dateutil.parser
 
 
 class Detector:
@@ -81,7 +82,7 @@ class Detector:
         if int(r.headers["X-RateLimit-Remaining"]) < 10:
             print("%s/%s github api call used, remaining %s until %s" % (
                 r.headers["X-Ratelimit-Used"], r.headers["X-RateLimit-Limit"], r.headers["X-RateLimit-Remaining"],
-                datetime.datetime.fromtimestamp(int(r.headers["X-Ratelimit-Reset"]))))
+                datetime.fromtimestamp(int(r.headers["X-Ratelimit-Reset"]))))
         return r
 
     def update_issue(self, issue_number):
@@ -169,6 +170,9 @@ class Detector:
             if len(self.libs[lib_name]) <= 1:
                 continue
             for issue_number in self.libs[lib_name]:
+                if dateutil.parser.isoparse(self.prs[issue_number]["updated_at"]) < datetime.now(timezone.utc) - timedelta(days=15):
+                    print("skipping %s message because PR has not been updated since %s" % (issue_number, self.prs[issue_number]["updated_at"]))
+                    continue
                 self._post_message_for_lib(issue_number, lib_name)
 
 
