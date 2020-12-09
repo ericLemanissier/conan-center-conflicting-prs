@@ -96,15 +96,16 @@ class Detector:
                 msg += ", ".join(["#%s" % pr for pr in self.libs[lib_name]])
                 msg += " |\n"
 
-        msg += "\n"
-        msg += "\n"
-        msg += "The following pull requests modify several recipes, so they were ignored:\n"
-        msg += "| Pull request | Libraries |\n"
-        msg += "| --- | --- |\n"
-        for p in self.illegal_prs:
-            msg += "| #%s | " % p["number"]
-            msg += ", ".join(sorted(p["libs"]))
-            msg += " |\n"
+        if self.illegal_prs:
+            msg += "\n"
+            msg += "\n"
+            msg += "The following pull requests modify several recipes, so they were ignored:\n"
+            msg += "| Pull request | Libraries |\n"
+            msg += "| --- | --- |\n"
+            for p in self.illegal_prs:
+                msg += "| #%s | " % p["number"]
+                msg += ", ".join(sorted(p["libs"]))
+                msg += " |\n"
         print(msg)
 
         if issue_number and self._make_request("GET", f"/repos/{self.owner}/{self.repo}/issues/{issue_number}").json()["body"] != msg:
