@@ -52,7 +52,9 @@ class Detector:
                         diff = await r.text()
                         for line in diff.split("\n"):
                             if line.startswith("+++ b/recipes/") or line.startswith("--- a/recipes/"):
-                                self.prs[pr]["libs"].add(line.split("/")[2])
+                                parts = line.split("/")
+                                if len(parts) >= 5:
+                                    self.prs[pr]["libs"].add("%s/%s" % (parts[2], parts[3]))
                 await asyncio.gather(*[asyncio.create_task(_populate_diff(pr)) for pr in self.prs])
 
         loop = asyncio.get_event_loop()
