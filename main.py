@@ -173,7 +173,8 @@ class Detector:
                 continue
             for issue_number in self.libs[lib_name]:
                 if any(label["name"] == "stale" for label in self.prs[issue_number]["labels"]):
-                    print("skipping %s message because PR is stale" % issue_number) 
+                    print("skipping %s message because PR is stale" % issue_number)
+                    continue
                 if dateutil.parser.isoparse(self.prs[issue_number]["updated_at"]) < datetime.now(timezone.utc) - timedelta(days=15):
                     print("skipping %s message because PR has not been updated since %s" % (issue_number, self.prs[issue_number]["updated_at"]))
                     continue
