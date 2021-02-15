@@ -49,7 +49,11 @@ class Detector:
                     async with session.get(self.prs[pr]["diff_url"]) as r:
                         r.raise_for_status()
                         self.prs[pr]["libs"] = set()
-                        diff = await r.text()
+                        try:
+                            diff = await r.text()
+                        except UnicodeDecodeError:
+                            print("error when decoding diff at %s" % self.prs[pr]["diff_url"])
+                            return
                         for line in diff.split("\n"):
                             if line.startswith("+++ b/recipes/") or line.startswith("--- a/recipes/"):
                                 parts = line.split("/")
