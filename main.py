@@ -140,13 +140,13 @@ class Detector:
     def _post_message_for_lib(self, issue_number, lib_name):
         conflicting_prs = [pr for pr in self.libs[lib_name] if pr != issue_number]
 
-        def _all_prs_referenced_in_body():
+        def _all_prs_referenced_in_message(message):
             for pr in conflicting_prs:
-                if ("#%s" % pr) not in self.prs[issue_number]["body"]:
+                if ("#%s" % pr) not in message:
                     return False
             return True
 
-        if _all_prs_referenced_in_body():
+        if _all_prs_referenced_in_message(self.prs[issue_number]["body"]):
             print("all the conflicting prs (%s) are already referenced in #%s, skipping message" % (
                 ", ".join("#%s" % p for p in conflicting_prs), issue_number))
             return
@@ -158,7 +158,7 @@ class Detector:
 
         comment_id = self._get_comment_id(issue_number)
         if comment_id:
-            if comment_id["body"] != message:
+            if not _all_prs_referenced_in_message(comment_id["body"]):
                 print(
                     f"comment found: https://github.com/{self.owner}/{self.repo}/pull/{issue_number}#issuecomment-%s" % comment_id['id'])
                 self._make_request("PATCH", f"/repos/{self.owner}/{self.repo}/issues/comments/%s" % comment_id["id"], json={
