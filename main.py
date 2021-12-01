@@ -141,6 +141,8 @@ class Detector:
         conflicting_prs = [pr for pr in self.libs[lib_name] if pr != issue_number]
 
         def _all_prs_referenced_in_message(message):
+            if not message:
+                return False
             return all(("#%s" % pr) in message or ("/%s" % pr) in message for pr in conflicting_prs)
 
         if _all_prs_referenced_in_message(self.prs[issue_number]["body"]):
