@@ -70,12 +70,17 @@ class Detector:
 
         for pr in self.prs.values():
             if len(pr["libs"]) > 1:
-                self.illegal_prs.append(pr)
-            else:
-                for lib in pr["libs"]:
-                    if lib not in self.libs:
-                        self.libs[lib] = list()
-                    self.libs[lib].append(pr["number"])
+                def get_package_name(e):
+                    return e.split('/')[0]
+                package_name = get_package_name(pr["libs"].pop())
+                if any(get_package_name(l) != package_name for l in pr["libs"])
+                    self.illegal_prs.append(pr)
+                    continue
+
+            for lib in pr["libs"]:
+                if lib not in self.libs:
+                    self.libs[lib] = list()
+                self.libs[lib].append(pr["number"])
 
         self.user_id = self._make_request("GET", f"/user").json()["id"]
 
