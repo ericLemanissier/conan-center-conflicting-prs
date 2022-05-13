@@ -73,7 +73,7 @@ class Detector:
                 def get_package_name(e):
                     return e.split('/')[0]
                 package_name = get_package_name(pr["libs"].pop())
-                if any(get_package_name(l) != package_name for l in pr["libs"])
+                if any(get_package_name(l) != package_name for l in pr["libs"]):
                     self.illegal_prs.append(pr)
                     continue
 
