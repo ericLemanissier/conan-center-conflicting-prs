@@ -128,7 +128,7 @@ class Detector:
         if issue_number and self._make_request("GET", f"/repos/{self.owner}/{self.repo}/issues/{issue_number}").json()["body"] != msg:
             print("updating issue")
             self._make_request("PATCH", f"/repos/{self.owner}/{self.repo}/issues/{issue_number}", json={
-                "body": msg + "\nThis can also be viewed on https://ericlemanissier.github.io/conan-center-conflicting-prs/,
+                "body": msg + "\nThis can also be viewed on https://ericlemanissier.github.io/conan-center-conflicting-prs/\n\n",
             })
 
     def _get_comment_id(self, issue_number):
