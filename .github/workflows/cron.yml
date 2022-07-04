@@ -32,6 +32,16 @@ jobs:
 
       # Runs a single command using the runners shell
       - name: Run a one-line script
-        run: python3 main.py
+        run: |
+          mkdir pages
+          cd pages
+          python3 ../main.py
         env:
           GH_ISSUE_NUMBER: 3571
+
+      - name: Deploy 
+        uses: JamesIves/github-pages-deploy-action@v4
+        with:
+          branch: gh-pages # The branch the action should deploy to.
+          folder: pages # The folder the action should deploy.
+          clean: true

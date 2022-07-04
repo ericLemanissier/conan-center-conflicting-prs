@@ -120,6 +120,11 @@ class Detector:
                 msg += " |\n"
         print(msg)
 
+        
+        with open("index.md", "w") as text_file:
+            text_file.write(md)
+            text_file.write(f"\npage generated on {datetime.now(timezone.utc)}\n\n")
+
         if issue_number and self._make_request("GET", f"/repos/{self.owner}/{self.repo}/issues/{issue_number}").json()["body"] != msg:
             print("updating issue")
             self._make_request("PATCH", f"/repos/{self.owner}/{self.repo}/issues/{issue_number}", json={
