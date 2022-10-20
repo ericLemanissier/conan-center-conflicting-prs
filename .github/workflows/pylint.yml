@@ -23,4 +23,6 @@ jobs:
     - name: Analysing the code with pylint
       run: |
         echo "::add-matcher::pylint_matcher.json"
-        pylint $(git ls-files '*.py')
+        rc=0;
+        pylint $(git ls-files '*.py') || rc=$?;
+        exit $(( $rc & 3 )) # fatal=1 | error=2 | usage error=32
