@@ -88,7 +88,7 @@ class Detector:
 
     def _make_request(self, method, url, **kwargs):
         if self.dry_run and method in ["PATCH", "POST"]:
-            return
+            return None
 
         r = self.session.request(method, "https://api.github.com%s" % url, **kwargs)
         r.raise_for_status()
