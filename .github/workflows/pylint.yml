@@ -25,4 +25,4 @@ jobs:
         echo "::add-matcher::pylint_matcher.json"
         rc=0;
         pylint $(git ls-files '*.py') || rc=$?;
-        exit $(( $rc & 3 )) # fatal=1 | error=2 | usage error=32
+        exit $(( $rc & 35 )) # fatal=1 | error=2 | usage error=32
