@@ -84,7 +84,7 @@ class Detector:
                 self.libs[lib].append(pr["number"])
 
         if not self.dry_run:
-            self.user_id = self._make_request("GET", f"/user").json()["id"]
+            self.user_id = self._make_request("GET", "/user").json()["id"]
 
     def _make_request(self, method, url, **kwargs):
         if self.dry_run and method in ["PATCH", "POST"]:
@@ -123,7 +123,7 @@ class Detector:
         print(msg)
 
         
-        with open("index.md", "w") as text_file:
+        with open("index.md", "w", encoding="latin_1") as text_file:
             text_file.write(msg)
             text_file.write("\npage generated on {{ site.time | date_to_xmlschema }}\n\n")
 
