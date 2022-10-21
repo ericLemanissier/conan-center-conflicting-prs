@@ -68,9 +68,9 @@ class Detector:
         loop = asyncio.get_event_loop()
         loop.run_until_complete(_populate_diffs())
 
-        self.libs = dict()
+        self.libs = {}
 
-        self.illegal_prs = list()
+        self.illegal_prs = []
 
         for pr in self.prs.values():
             if len(pr["libs"]) > 1:
@@ -84,7 +84,7 @@ class Detector:
 
             for lib in pr["libs"]:
                 if lib not in self.libs:
-                    self.libs[lib] = list()
+                    self.libs[lib] = []
                 self.libs[lib].append(pr["number"])
 
         if not self.dry_run:
