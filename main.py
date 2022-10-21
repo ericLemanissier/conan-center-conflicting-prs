@@ -1,7 +1,11 @@
-import requests
+#pylint: disable = line-too-long, missing-module-docstring, missing-class-docstring, missing-function-docstring, invalid-name, too-many-lines, too-many-branches, no-name-in-module, too-few-public-methods
+
 from datetime import datetime,timedelta,timezone
 import os
-import aiohttp, asyncio
+import asyncio
+import logging
+import requests
+import aiohttp
 import dateutil.parser
 
 
@@ -13,13 +17,13 @@ class Detector:
 
     def __init__(self, token=None, user=None, pw=None):
         self.session = requests.session()
-        
+
         if user and pw:
             self.session.auth = requests.auth.HTTPBasicAuth(user, pw)
 
         self.session.headers = {}
         if token:
-            self.session.headers["Authorization"] = "token %s" % token
+            self.session.headers["Authorization"] = f"token {token}"
 
         self.session.headers["Accept"] = "application/vnd.github.v3+json"
         self.session.headers["User-Agent"] = "request"
@@ -52,13 +56,13 @@ class Detector:
                         try:
                             diff = await r.text()
                         except UnicodeDecodeError:
-                            print("error when decoding diff at %s" % self.prs[pr]["diff_url"])
+                            logging.warning("error when decoding diff at %s", self.prs[pr]["diff_url"])
                             return
                         for line in diff.split("\n"):
                             if line.startswith("+++ b/recipes/") or line.startswith("--- a/recipes/"):
                                 parts = line.split("/")
                                 if len(parts) >= 5:
-                                    self.prs[pr]["libs"].add("%s/%s" % (parts[2], parts[3]))
+                                    self.prs[pr]["libs"].add(f"{parts[2]}/{parts[3]}")
                 await asyncio.gather(*[asyncio.create_task(_populate_diff(pr)) for pr in self.prs])
 
         loop = asyncio.get_event_loop()
@@ -90,12 +94,12 @@ class Detector:
         if self.dry_run and method in ["PATCH", "POST"]:
             return None
 
-        r = self.session.request(method, "https://api.github.com%s" % url, **kwargs)
+        r = self.session.request(method, f"https://api.github.com{url}", **kwargs)
         r.raise_for_status()
         if int(r.headers["X-RateLimit-Remaining"]) < 10:
-            print("%s/%s github api call used, remaining %s until %s" % (
+            logging.warning("%s/%s github api call used, remaining %s until %s",
                 r.headers["X-Ratelimit-Used"], r.headers["X-RateLimit-Limit"], r.headers["X-RateLimit-Remaining"],
-                datetime.fromtimestamp(int(r.headers["X-Ratelimit-Reset"]))))
+                datetime.fromtimestamp(int(r.headers["X-Ratelimit-Reset"])))
         return r
 
     def update_issue(self, issue_number):
@@ -106,7 +110,7 @@ class Detector:
         msg += "| --- | --- |\n"
         for lib_name in sorted(self.libs):
             if len(self.libs[lib_name]) > 1:
-                msg += "| %s | " % lib_name
+                msg += f"| {lib_name} | "
                 msg += ", ".join([f"[#{pr}](https://github.com/conan-io/conan-center-index/pull/{pr})" for pr in self.libs[lib_name]])
                 msg += " |\n"
 
@@ -117,12 +121,12 @@ class Detector:
             msg += "| Pull request | Libraries |\n"
             msg += "| --- | --- |\n"
             for p in self.illegal_prs:
-                msg += "| #%s | " % p["number"]
+                msg += f"| #{p['number']} | "
                 msg += ", ".join(sorted(p["libs"]))
                 msg += " |\n"
         print(msg)
 
-        
+
         with open("index.md", "w", encoding="latin_1") as text_file:
             text_file.write(msg)
             text_file.write("\npage generated on {{ site.time | date_to_xmlschema }}\n\n")
@@ -155,15 +159,15 @@ class Detector:
         def _all_prs_referenced_in_message(message):
             if not message:
                 return False
-            return all(("#%s" % pr) in message or ("/%s" % pr) in message for pr in conflicting_prs)
+            return all((f"#{pr}") in message or (f"/{pr}") in message for pr in conflicting_prs)
 
         if _all_prs_referenced_in_message(self.prs[issue_number]["body"]):
-            print("all the conflicting prs (%s) are already referenced in #%s, skipping message" % (
-                ", ".join("#%s" % p for p in conflicting_prs), issue_number))
+            logging.warning("all the conflicting prs (%s) are already referenced in #%s, skipping message",
+                ", ".join(f"#{p}" for p in conflicting_prs), issue_number)
             return
 
-        message = "I detected other pull requests that are modifying %s recipe:\n" % lib_name
-        message += "".join(["- #%s\n" % pr for pr in conflicting_prs])
+        message = f"I detected other pull requests that are modifying {lib_name} recipe:\n"
+        message += "".join([f"- #{pr}\n" for pr in conflicting_prs])
         message += "\n"
         message += "This message is automatically generated by https://github.com/ericLemanissier/conan-center-conflicting-prs so don't hesitate to report issues/improvements there.\n"
 
@@ -184,15 +188,15 @@ class Detector:
                 })
 
     def update_pr_messages(self):
-        for lib_name in self.libs:
-            if len(self.libs[lib_name]) <= 1:
+        for lib_name, libs in self.libs.items():
+            if len(libs) <= 1:
                 continue
-            for issue_number in self.libs[lib_name]:
+            for issue_number in libs:
                 if any(label["name"] == "stale" for label in self.prs[issue_number]["labels"]):
-                    print("skipping %s message because PR is stale" % issue_number)
+                    logging.warning("skipping %s message because PR is stale", issue_number)
                     continue
                 if dateutil.parser.isoparse(self.prs[issue_number]["updated_at"]) < datetime.now(timezone.utc) - timedelta(days=15):
-                    print("skipping %s message because PR has not been updated since %s" % (issue_number, self.prs[issue_number]["updated_at"]))
+                    logging.warning("skipping %s message because PR has not been updated since %s", issue_number, self.prs[issue_number]["updated_at"])
                     continue
                 self._post_message_for_lib(issue_number, lib_name)
 
