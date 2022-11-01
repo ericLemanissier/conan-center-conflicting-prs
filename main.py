@@ -1,11 +1,9 @@
-#pylint: disable = line-too-long, missing-module-docstring, missing-class-docstring, missing-function-docstring, invalid-name, too-many-lines, too-many-branches, no-name-in-module, too-few-public-methods
+#pylint: disable = line-too-long, missing-module-docstring, missing-class-docstring, missing-function-docstring, invalid-name, too-many-lines, too-many-branches, no-name-in-module, too-few-public-methods, too-many-locals
 
 from datetime import datetime,timedelta,timezone
 import os
-import asyncio
 import logging
 import requests
-import aiohttp
 import dateutil.parser
 
 
@@ -32,41 +30,26 @@ class Detector:
 
         page = 1
         while True:
-            r = self._make_request("GET", f"/repos/{self.owner}/{self.repo}/pulls", params={
+            results = self._make_request("GET", f"/repos/{self.owner}/{self.repo}/pulls", params={
                 "state": "open",
                 "sort": "created",
                 "direction": "desc",
                 "per_page": 100,
                 "page": str(page)
-            })
-            results = r.json()
+            }).json()
             for p in results:
                 self.prs[int(p["number"])] = p
             page += 1
             if not results:
                 break
 
-
-        async def _populate_diffs():
-            async with aiohttp.ClientSession() as session:
-                async def _populate_diff(pr):
-                    async with session.get(self.prs[pr]["diff_url"]) as r:
-                        r.raise_for_status()
-                        self.prs[pr]["libs"] = set()
-                        try:
-                            diff = await r.text()
-                        except UnicodeDecodeError:
-                            logging.warning("error when decoding diff at %s", self.prs[pr]["diff_url"])
-                            return
-                        for line in diff.split("\n"):
-                            if line.startswith("+++ b/recipes/") or line.startswith("--- a/recipes/"):
-                                parts = line.split("/")
-                                if len(parts) >= 5:
-                                    self.prs[pr]["libs"].add(f"{parts[2]}/{parts[3]}")
-                await asyncio.gather(*[asyncio.create_task(_populate_diff(pr)) for pr in self.prs])
-
-        loop = asyncio.get_event_loop()
-        loop.run_until_complete(_populate_diffs())
+        for pr_number, pr in self.prs.items():
+            pr["libs"] = set()
+            for file in self._make_request("GET", f"/repos/{self.owner}/{self.repo}/pulls/{pr_number}/files").json():
+                for field in ['filename', 'previous_filename']:
+                    parts = file.get(field, '').split("/")
+                    if len(parts) >= 4 and parts[0] == "recipes":
+                        pr["libs"].add(f"{parts[1]}/{parts[2]}")
 
         self.libs = {}
 
