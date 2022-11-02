@@ -20,5 +20,5 @@ jobs:
         python -m pip install --upgrade pip
         python -m pip install prospector[with_mypy] prospector[with_vulture] types-requests types-python-dateutil
         python -m pip install -r requirements.txt
-    - name: Analysing the code with mypy
-      run: prospector  --with-tool vulture  --with-tool mypy --strictness high --max-line-length 200
+    - name: Analysing the code with prospector
+      run: prospector  --with-tool vulture  --with-tool mypy --strictness veryhigh --max-line-length 200
