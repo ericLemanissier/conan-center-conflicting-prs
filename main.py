@@ -14,7 +14,7 @@ class Detector:
 
     dry_run: bool = False
 
-    def __init__(self, token: str = None, user: str = None, pw: str = None):
+    def __init__(self, token: str = "", user: str = "", pw: str = ""):
         self.session = requests.session()
 
         if user and pw:
