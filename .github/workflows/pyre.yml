@@ -37,10 +37,38 @@ jobs:
         with:
           submodules: true
 
-      - name: Run Pyre
-        uses: facebook/pyre-action@60697a7858f7cc8470d8cc494a3cf2ad6b06560d
+      - name: Set up Python
+        uses: actions/setup-python@v4
         with:
-          # To customize these inputs:
-          # See https://github.com/facebook/pyre-action#inputs
-          repo-directory: './'
-          requirements-path: 'requirements.txt'
+          python-version: '>=3.6'
+
+      - name: Install Pyre
+        run: pip install pyre-check
+        shell: bash
+
+      - name: Install dependencies
+        run: pip install -r "requirements.txt"
+        shell: bash
+
+      - name: Set up Pyre
+        run: echo -e '\n' | pyre init
+        shell: bash
+
+      - name: Run Pyre
+        run: |
+          pyre --noninteractive --output=sarif check > sarif.json
+        shell: bash
+
+      - name: Saving results in SARIF
+        if: always()
+        uses: actions/upload-artifact@v3
+        with:
+          name: SARIF Results
+          path: sarif.json
+          if-no-files-found: ignore
+
+      - name: Upload SARIF Results
+        if: always()
+        uses: github/codeql-action/upload-sarif@v2
+        with:
+          sarif_file: sarif.json
