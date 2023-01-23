@@ -40,7 +40,7 @@ jobs:
           GH_ISSUE_NUMBER: 3571
 
       - name: Setup Pages
-        uses: actions/configure-pages@v2
+        uses: actions/configure-pages@v3
       - name: Build with Jekyll
         uses: actions/jekyll-build-pages@v1
         with:
