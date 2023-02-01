@@ -39,12 +39,51 @@ jobs:
         with:
           submodules: true
 
-      - name: Run Pysa
-        uses: facebook/pysa-action@f46a63777e59268613bd6e2ff4e29f144ca9e88b
+      - name: Set up Python
+        uses: actions/setup-python@v4
         with:
-          # To customize these inputs:
-          # See https://github.com/facebook/pysa-action#inputs
-          repo-directory: './'
-          requirements-path: 'requirements.txt'
-          infer-types: true
-          include-default-sapp-filters: true
+          python-version: '>=3.6'
+
+      - name: Install Pysa
+        run: pip install pyre-check
+        shell: bash
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+        shell: bash
+
+      - name: Prepare SAPP filters directory
+        run: |
+          filters_path='tmp/sapp_filters'
+          mkdir -p $filters_path
+          echo 'Copying default sapp filters to temporary directory'
+          cp -r ${{env.LD_LIBRARY_PATH}}/pyre_check/pysa_filters/* $filters_path
+        shell: bash
+
+      - name: Set up Pyre
+        run: echo -e '\n' | pyre init
+        shell: bash
+
+      - name: Run Pyre Infer
+        run: |
+          pyre infer
+          pyre infer -i --annotate-from-existing-stubs
+        shell: bash
+        
+      - name: Run Pysa
+        run: pyre analyze --no-verify --save-results-to=./pysa-output
+        shell: bash
+
+      - name: Saving Pysa results for SAPP
+        uses: actions/upload-artifact@v3
+        with:
+          name: pysa-results
+          path: pysa-output
+          if-no-files-found: error
+
+      - name: Postprocess Pysa results with SAPP
+        uses: facebook/sapp-action@main
+        with:
+          version: latest
+          artifact-handle: pysa-results
+          filters-directory: tmp/sapp_filters
