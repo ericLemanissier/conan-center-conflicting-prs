@@ -104,7 +104,7 @@ class Detector:
         for lib_name in sorted(self.libs):
             if len(self.libs[lib_name]) > 1:
                 msg += f"| {lib_name} | "
-                msg += ", ".join([f"[#{pr}](https://github.com/conan-io/conan-center-index/pull/{pr})" for pr in self.libs[lib_name]])
+                msg += ", ".join([f"[#{pr}](https://github.com/{self.owner}/{self.repo}/pull/{pr})" for pr in self.libs[lib_name]])
                 msg += " |\n"
 
         if self.illegal_prs:
