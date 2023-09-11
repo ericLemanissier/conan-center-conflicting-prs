@@ -1,5 +1,6 @@
 # pylint: disable = invalid-name
 
+import ast
 from datetime import datetime, timedelta, timezone
 import os
 from typing import Any, Dict, List, Set
@@ -181,9 +182,26 @@ class Detector:
                     "body": message
                 })
 
+    def _is_deprecated(self, lib_name: str) -> bool:
+        r = self.session.request("GET",
+                                 f"https://raw.githubusercontent.com/{self.owner}/{self.repo}/master/recipes/{lib_name}/conanfile.py")
+        if r.status_code == 404:
+            logging.warning("Could not find recipe for library %s", lib_name)
+            return False
+        r.raise_for_status()
+        for node1 in ast.parse(r.text).body:
+            if isinstance(node1, ast.ClassDef) and any(base.id == "ConanFile" for base in node1.bases):
+                for node2 in node1.body:
+                    if isinstance(node2, ast.Assign) and any(target.id == "deprecated" for target in node2.targets):
+                        return True
+        return False
+
     def update_pr_messages(self) -> None:
         for lib_name, prs in self.libs.items():
+            is_deprecated = self._is_deprecated(lib_name)
             for issue_number in prs:
+                if is_deprecated:
+                    logging.warning("library %s is deprecated, #%s", lib_name, issue_number)
                 if any(label["name"] == "stale" for label in self.prs[issue_number]["labels"]):
                     logging.warning("skipping %s message because PR is stale", issue_number)
                     continue
