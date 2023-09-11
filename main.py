@@ -146,6 +146,8 @@ class Detector:
 
     def _post_message_for_lib(self, issue_number: int, lib_name: str) -> None:
         conflicting_prs = [pr for pr in self.libs[lib_name] if pr != issue_number]
+        if not conflicting_prs:
+            return
 
         def _all_prs_referenced_in_message(message: str) -> bool:
             if not message:
@@ -180,10 +182,8 @@ class Detector:
                 })
 
     def update_pr_messages(self) -> None:
-        for lib_name, libs in self.libs.items():
-            if len(libs) <= 1:
-                continue
-            for issue_number in libs:
+        for lib_name, prs in self.libs.items():
+            for issue_number in prs:
                 if any(label["name"] == "stale" for label in self.prs[issue_number]["labels"]):
                     logging.warning("skipping %s message because PR is stale", issue_number)
                     continue
