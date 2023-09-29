@@ -118,6 +118,8 @@ class Detector:
                 msg += f"| #{p['number']} | "
                 msg += ", ".join(sorted(p["libs"]))
                 msg += " |\n"
+        msg += "\n"
+        msg += "\n"
         logging.debug(msg)
 
         with open("index.md", "w", encoding="latin_1") as text_file:
