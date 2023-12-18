@@ -75,7 +75,7 @@ jobs:
         shell: bash
 
       - name: Saving Pysa results for SAPP
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: pysa-results
           path: pysa-output
