@@ -47,7 +47,7 @@ jobs:
           source: ./pages
           destination: ./_site
       - name: Upload artifact
-        uses: actions/upload-pages-artifact@v2
+        uses: actions/upload-pages-artifact@v3
 
   # Deployment job
   deploy:
@@ -55,6 +55,7 @@ jobs:
     permissions:
       pages: write      # to deploy to Pages
       id-token: write   # to verify the deployment originates from an appropriate source
+      actions: read
 
     # Deploy to the github-pages environment
     environment:
