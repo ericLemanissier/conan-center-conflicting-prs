@@ -233,7 +233,7 @@ class Detector:
                 if any(label["name"] == "stale" for label in self.prs[issue_number]["labels"]):
                     logging.warning("skipping %s message because PR is stale", issue_number)
                     continue
-                if dateutil.parser.isoparse(self.prs[issue_number]["updated_at"]) < datetime.now(timezone.utc) - timedelta(days=15):
+                if dateutil.parser.isoparse(self.prs[issue_number]["updated_at"]) < datetime.now(timezone.utc) - timedelta(days=30):
                     logging.warning("skipping %s message because PR has not been updated since %s",
                                     issue_number, self.prs[issue_number]["updated_at"])
                     continue
